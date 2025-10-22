@@ -259,7 +259,7 @@ def parse_button_text(row: WebElement):
 
 
 def parse_bonus_block_text(row: WebElement):
-    accordion_bodies = row.find_elements(By.CSS_SELECTOR, 'div.acf-field[data-key="field_641c9292b0a24"] "]')
+    accordion_bodies = row.find_elements(By.CSS_SELECTOR, 'div.acf-field[data-key="field_641c9292b0a24"]')
     if not accordion_bodies:
             accordion_bodies = row.find_elements(By.CSS_SELECTOR, 'div[data-name="section_page"][data-type="repeater"]')
 

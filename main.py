@@ -59,7 +59,7 @@ class Ui_AutoTranslatorWnd(object):
         self.label_2.setFont(font)
         self.label_2.setObjectName("label_2")
         self.Start_btn = QtWidgets.QPushButton(AutoTranslatorWnd)
-        self.Start_btn.setGeometry(QtCore.QRect(10, 690, 121, 31))
+        self.Start_btn.setGeometry(QtCore.QRect(30, 690, 121, 31))
         self.Start_btn.setObjectName("Start_btn")
         self.ListOfLink = QtWidgets.QListWidget(AutoTranslatorWnd)
         self.ListOfLink.setGeometry(QtCore.QRect(70, 230, 411, 181))
@@ -98,14 +98,11 @@ class Ui_AutoTranslatorWnd(object):
         self.LogList = QtWidgets.QListWidget(AutoTranslatorWnd)
         self.LogList.setGeometry(QtCore.QRect(70, 540, 421, 131))
         self.LogList.setObjectName("LogList")
-        self.Parse_btn = QtWidgets.QPushButton(AutoTranslatorWnd)
-        self.Parse_btn.setGeometry(QtCore.QRect(140, 690, 121, 31))
-        self.Parse_btn.setObjectName("Parse_btn")
         self.CloseBrowser_btn = QtWidgets.QPushButton(AutoTranslatorWnd)
-        self.CloseBrowser_btn.setGeometry(QtCore.QRect(400, 690, 131, 31))
+        self.CloseBrowser_btn.setGeometry(QtCore.QRect(380, 690, 131, 31))
         self.CloseBrowser_btn.setObjectName("CloseBrowser_btn")
         self.TranslateStart_btn = QtWidgets.QPushButton(AutoTranslatorWnd)
-        self.TranslateStart_btn.setGeometry(QtCore.QRect(270, 690, 121, 31))
+        self.TranslateStart_btn.setGeometry(QtCore.QRect(210, 690, 121, 31))
         self.TranslateStart_btn.setObjectName("TranslateStart_btn")
         self.LanguageComboBox = QtWidgets.QComboBox(AutoTranslatorWnd)
         self.LanguageComboBox.setGeometry(QtCore.QRect(310, 460, 141, 31))
@@ -131,17 +128,14 @@ class Ui_AutoTranslatorWnd(object):
         self.RemLink_btn.setText(_translate("AutoTranslatorWnd", "Удалить"))
         self.label_4.setText(_translate("AutoTranslatorWnd", "Ссылка на админку"))
         self.loglabel.setText(_translate("AutoTranslatorWnd", "Статус"))
-        self.Parse_btn.setText(_translate("AutoTranslatorWnd", "Парсить сайт"))
         self.CloseBrowser_btn.setText(_translate("AutoTranslatorWnd", "Закрыть браузер"))
         self.TranslateStart_btn.setText(_translate("AutoTranslatorWnd", "Запустить перевод"))
         self.label_5.setText(_translate("AutoTranslatorWnd", "Язык перевода"))
 
-        self.Parse_btn.setDisabled(True)
         self.TranslateStart_btn.setDisabled(True)
         self.CloseBrowser_btn.setDisabled(True)
         self.Start_btn.clicked.connect(self.open_tabs)
-        self.Parse_btn.clicked.connect(self.start_parse)
-        self.TranslateStart_btn.clicked.connect(self.translate_text)
+        self.TranslateStart_btn.clicked.connect(self.start_translate)
         self.CloseBrowser_btn.clicked.connect(self.close_browser)
         self.AddLink_btn.clicked.connect(self.add_link)
         self.RemLink_btn.clicked.connect(self.remove_link)
@@ -170,11 +164,6 @@ class Ui_AutoTranslatorWnd(object):
 
     def onTabsOpened(self, msg: str):
         self.add_log(msg)
-        self.Parse_btn.setDisabled(False)
-        self.CloseBrowser_btn.setDisabled(False)
-
-    def onParsed(self, msg: str):
-        self.add_log(msg)
         self.TranslateStart_btn.setDisabled(False)
         self.CloseBrowser_btn.setDisabled(False)
 
@@ -187,7 +176,6 @@ class Ui_AutoTranslatorWnd(object):
         self.TranslateStart_btn.setDisabled(False)
         self.CloseBrowser_btn.setDisabled(False)
         self.Start_btn.setDisabled(False)
-        self.Parse_btn.setDisabled(False)
 
     def onBrowserClosed(self, msg: str):
         self.add_log(msg)
@@ -198,7 +186,6 @@ class Ui_AutoTranslatorWnd(object):
         self.Start_btn.setDisabled(False)
         self.TranslateStart_btn.setDisabled(False)
         self.CloseBrowser_btn.setDisabled(False)
-        self.Parse_btn.setDisabled(False)
 
     def open_tabs(self):
         adminLink = self.AdminLink_input.toPlainText()
@@ -217,34 +204,19 @@ class Ui_AutoTranslatorWnd(object):
             self.worker.fallback_fn = self.onFallback
             self.worker.start()
     
-    def start_parse(self):
-        self.add_log("Начинаем считывать данные с вкладок....")
+    def start_translate(self):
+        self.add_log("Начинаем считывать данные с вкладок и переводить....")
+        initTranslator()
         self.TranslateStart_btn.setDisabled(True)
         self.CloseBrowser_btn.setDisabled(True)
-        self.Parse_btn.setDisabled(True)
         self.Start_btn.setDisabled(True)
         self.worker = WorkerThread(ParseData)
         self.worker.log.connect(self.add_log)
         self.worker.error.connect(self.add_log)
-        self.worker.finished.connect(lambda _: self.onParsed("Данные считались ✅ Нажмите кнопку перевод, данные будут подставляться в поля"))
+        self.worker.finished.connect(lambda _: self.onTranslated("Данные считались ✅ Нажмите кнопку перевод, данные будут подставляться в поля"))
         self.worker.fallback_fn = self.onFallback
         self.worker.start()
     
-    def translate_text(self):
-        self.add_log("Начинаем переводить текст....")
-        initTranslator()
-        self.TranslateStart_btn.setDisabled(True)
-        self.CloseBrowser_btn.setDisabled(True)
-        self.Parse_btn.setDisabled(True)
-        self.Start_btn.setDisabled(True)
-        self.worker = WorkerThread(StarTranslate)
-        self.worker.log.connect(self.add_log)
-        self.worker.error.connect(self.add_log)
-        self.worker.finished.connect(lambda _: self.onTranslated("Данные перевелись ✅ Проверьте перевод не забудьте update! Только после закрывайте"))
-        self.worker.fallback_fn = self.onFallback
-        self.worker.start()
-
-
     def close_browser(self):
         self.add_log("Selenium закрывает браузер подождите....")
         self.TranslateStart_btn.setDisabled(True)

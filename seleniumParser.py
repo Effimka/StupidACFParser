@@ -13,6 +13,8 @@ import config
 import parserUtils
 import os
 from translator import translate_json
+import threading
+import queue
 
 HEADLESS = False
 # Таймауты
@@ -20,6 +22,10 @@ DEFAULT_WAIT = 15
 # ------------------------------------------
 DRIVER = None  # глобальный драйвер
 FOLDER = 'Page/'
+
+
+task_queue = queue.Queue()
+done_flag = threading.Event()
 
 def create_driver(headless: bool = HEADLESS):
     options = webdriver.ChromeOptions()
@@ -164,6 +170,9 @@ def StartSelenim(emit_log=print):
 
 def ParseData(emit_log=print):
      # Проход по каждой вкладке и обработка
+    done_flag.clear()
+    consumer_thread = threading.Thread(target=TranslateBlock, args=(emit_log,))
+    consumer_thread.start()
     for idx, handle in enumerate(DRIVER.window_handles):
         DRIVER.switch_to.window(handle)
         current_url = DRIVER.current_url
@@ -174,9 +183,16 @@ def ParseData(emit_log=print):
             blocks = parse_in_current_tab(DRIVER, emit_log)
             with open(f'Page/{idx+1}_page_blocks.json', 'w', encoding='utf-8') as f:
                 json.dump(blocks, f, ensure_ascii=False, indent=4)
+            task_queue.put( { 
+                'filename': f'{idx+1}_page_blocks.json', 
+                'blocks': blocks 
+            })
         except Exception as e:
             emit_log(f"Ошибка при обработке вкладки {current_url}: {e}")
+            done_flag.set()
             raise
+
+    done_flag.set()
 
 
 def DriverShutdown(emit_log=print):
@@ -185,9 +201,32 @@ def DriverShutdown(emit_log=print):
         time.sleep(25)
     DRIVER.quit();
 
+def TranslateBlock(emit_log=print):
+    while True:
+        try:
+            task = task_queue.get(timeout=1)
+        except queue.Empty:
+            if done_flag.is_set():
+                StarTranslate(emit_log)
+                break
+            continue
+
+        try:
+            emit_log(f"Переводим файл - {task['filename']}")
+            translated_data = [translate_json(block) for block in task['blocks']]
+            emit_log(f'Сохраняем перевод файла')
+
+            with open(f"{FOLDER}translate/{task['filename']}_translated.json", "w", encoding="utf-8") as f:
+                json.dump(translated_data, f, ensure_ascii=False, indent=4)
+        
+        except Exception as e:
+            emit_log(f"Не удалось перевести {task['filename']}. Ошибка: {e}")
+        time.sleep(0.8)
+        task_queue.task_done()
+
 
 def StarTranslate(emit_log=print):
-    MakeTranslatedJsons(emit_log)
+    #MakeTranslatedJsons(emit_log)
     try:
         for idx, handle in enumerate(DRIVER.window_handles):
             DRIVER.switch_to.window(handle)

@@ -81,7 +81,7 @@
   <widget class="QPushButton" name="Start_btn">
    <property name="geometry">
     <rect>
-     <x>10</x>
+     <x>30</x>
      <y>690</y>
      <width>121</width>
      <height>31</height>
@@ -214,23 +214,10 @@
     </rect>
    </property>
   </widget>
-  <widget class="QPushButton" name="Parse_btn">
-   <property name="geometry">
-    <rect>
-     <x>140</x>
-     <y>690</y>
-     <width>121</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Парсить сайт</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="CloseBrowser_btn">
    <property name="geometry">
     <rect>
-     <x>400</x>
+     <x>380</x>
      <y>690</y>
      <width>131</width>
      <height>31</height>
@@ -243,7 +230,7 @@
   <widget class="QPushButton" name="TranslateStart_btn">
    <property name="geometry">
     <rect>
-     <x>270</x>
+     <x>210</x>
      <y>690</y>
      <width>121</width>
      <height>31</height>
