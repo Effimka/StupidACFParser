@@ -1,7 +1,7 @@
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.by import By
 
-TITLE_EL_ARR = [ 'field_640c5b8d20ccd', 'field_640c6063bba51', 'field_640b9093230e3', 'field_6867d4520b00e', 'field_684c251d0a653', 'field_68546226b5741', 'field_6854089bb995c', 'field_6867b3142a6bf' ]
+TITLE_EL_ARR = [ 'field_640c5b8d20ccd', 'field_640c6063bba51', 'field_640b9093230e3', 'field_6867d4520b00e', 'field_684c251d0a653', 'field_68546226b5741', 'field_6854089bb995c', 'field_6867b3142a6bf', 'field_640c963ce4abf', 'field_641090657015c' ]
 CONTENT_EL_MAP = {
     'base' : [ 'field_640c5b8d2bdba', 'field_6867d45216058', 'field_684c31edef5f4', 'field_684c251d157d1', 'field_6854628f0ff99', 'field_68540914b995e' ],
     'faq' : {
@@ -12,7 +12,7 @@ CONTENT_EL_MAP = {
     },
 }
 #COLUMN_EL_ARR = 
-BUTTON_EL_ARR = [ 'field_640c5b8d42263', 'field_684c3257ef5f6', 'field_684c251d1cc1a', 'field_6854095ab995f' ]
+BUTTON_EL_ARR = [ 'field_640c5b8d42263', 'field_684c3257ef5f6', 'field_684c251d1cc1a', 'field_6854095ab995f', 'field_640c9825498f3' ]
 DECOR_EL_ARR = [ 'field_6867c0727114b' ]
 ANCHOR_EL_ARR = [ 'field_684c202428761', 'field_684c229243962', 'field_684c251d27bb9', 'field_68546226c7c7b', 'field_6867d45224b20', 'field_684c21f42786d', 'field_6867b31444381' ]
 
@@ -299,6 +299,138 @@ def parse_bonus_block_text(row: WebElement):
     return None, None
 
 
+def parse_block(row: WebElement):
+    all_data = []
+    main_locator = None
+
+    # несколько accordion блоков
+    block_bodies = row.find_elements(By.CSS_SELECTOR, 'div.acf-field[data-key="field_641c92a039bb4"]')
+    print(f"Found {len(block_bodies)} accordion bodies")
+
+    for body in block_bodies:
+        try:
+            repeater = body.find_element(By.CSS_SELECTOR, 'div.acf-field-repeater[data-key="field_640c64cf07fe4"]')
+
+            # ищем все строки в таблице
+            rows = repeater.find_elements(By.CSS_SELECTOR, 'table.acf-table tr.acf-row')
+            print(f"  Found {len(rows)} rows in repeater")
+
+            for r in rows:
+                title_input = r.find_elements(By.CSS_SELECTOR, 'input[name*="[field_640c64f107fe6]"]')
+                text_input = r.find_elements(By.CSS_SELECTOR, 'textarea[name*="[field_64536ce155402]"]')
+                btnText_input = r.find_elements(By.CSS_SELECTOR, 'input[name*="[field_640c651407fea]"]')
+
+                listText = r.find_elements(By.CSS_SELECTOR, 'input[name*="[field_640c650007fe8]"]')
+
+                if text_input or btnText_input:
+                    for title_in, text_in, btnT_in in zip(title_input, text_input, btnText_input):
+                        title = title_in.get_attribute("value") or ""
+                        text = text_in.get_attribute("value") or ""
+                        btn = btnT_in.get_attribute("value") or ""
+
+                        if title.strip() or text.strip() or btn.strip():
+                            all_data.append({
+                                "block_title": {"element": get_locator(title_in), "text": title.strip()},
+                                "block_text": {"element": get_locator(text_in), "text": text.strip()},
+                                "block_btn": {"element": get_locator(btnT_in), "text": btn.strip()}
+                            })
+                elif listText:
+                    for textIn in listText:
+                        text = textIn.get_attribute("value") or ""
+
+                        if text.strip():
+                            all_data.append({
+                                "block_text": {"element": get_locator(textIn), "text": text.strip()},
+                            })
+
+                
+            if not main_locator:
+                main_locator = get_locator(body)
+
+            
+        
+        except Exception as e:
+            print(f"Ошибка при парсинге блока: {e}")
+            continue
+
+    return (main_locator, all_data) if all_data else (None, None)
+
+
+def parse_block_promo(row: WebElement):
+    block_bodies = row.find_elements(By.CSS_SELECTOR, 'div.acf-field[data-key="field_643d44a25561c"]')
+    all_data = []
+    main_locator = None
+
+    for body in block_bodies:
+        # Парсим все заголовки
+        title1_inputs = body.find_elements(By.CSS_SELECTOR, 'input[name*="[field_640c90780c8a2]"]')
+        title2_inputs = body.find_elements(By.CSS_SELECTOR, 'input[name*="[field_640c90830c8a3]"]')
+        title3_inputs = body.find_elements(By.CSS_SELECTOR, 'input[name*="[field_640c90840c8a4]"]')
+
+        max_len = max(len(title1_inputs), len(title2_inputs), len(title3_inputs))
+        for i in range(max_len):
+            title1_input = title1_inputs[i] if i < len(title1_inputs) else None
+            title2_input = title2_inputs[i] if i < len(title2_inputs) else None
+            title3_input = title3_inputs[i] if i < len(title3_inputs) else None
+
+            title1 = title1_input.get_attribute("value").strip() if title1_input and not title1_input.get_attribute("disabled") else ''
+            title2 = title2_input.get_attribute("value").strip() if title2_input and not title2_input.get_attribute("disabled") else ''
+            title3 = title3_input.get_attribute("value").strip() if title3_input and not title3_input.get_attribute("disabled") else ''
+
+            if title1 or title2 or title3:
+                all_data.append({
+                    "title1": {"element": get_locator(title1_input) if title1_input else None, "text": title1},
+                    "title2": {"element": get_locator(title2_input) if title2_input else None, "text": title2},
+                    "title3": {"element": get_locator(title3_input) if title3_input else None, "text": title3},
+                })
+
+                if not main_locator:
+                    main_locator = get_locator(body)
+
+    if all_data:
+        return main_locator, all_data
+
+    return None, None
+
+
+def parse_block_advantages(row: WebElement):
+    block_bodies = row.find_elements(By.CSS_SELECTOR, 'div.acf-field[data-key="field_643d44a25561c"]')
+    all_data = []
+    main_locator = None
+
+    for body in block_bodies:
+        try:
+            title1_inputs = body.find_elements(By.CSS_SELECTOR, 'input[name*="[field_640c88d683da9]"]')
+            title2_inputs = body.find_elements(By.CSS_SELECTOR, 'input[name*="[field_640c88ee83daa]"]')
+            title3_inputs = body.find_elements(By.CSS_SELECTOR, 'input[name*="[field_640c88f683dab]"]')
+            btnText_inputs = body.find_elements(By.CSS_SELECTOR, 'input[name*="[field_640c899f83dad]"]')
+
+            for title1_input, title2_input, title3_input, btnText_input in zip(title1_inputs, title2_inputs, title3_inputs, btnText_inputs):
+                title1 = title1_input.get_attribute("value").strip() if not title1_input.get_attribute("disabled") else ''
+                title2 = title2_input.get_attribute("value").strip() if not title2_input.get_attribute("disabled") else ''
+                title3 = title3_input.get_attribute("value").strip() if not title3_input.get_attribute("disabled") else ''
+                btn = btnText_input.get_attribute("value").strip() if not btnText_input.get_attribute("disabled") else ''
+
+                if title1 or title2 or title3 or btn:  
+                    all_data.append({
+                        "title1": {"element": get_locator(title1_input), "text": title1},
+                        "title2": {"element": get_locator(title2_input), "text": title2},
+                        "title3": {"element": get_locator(title3_input), "text": title3},
+                        "block_btn": {"element": get_locator(btnText_input), "text": btn}
+                    })
+
+                    if not main_locator:
+                        main_locator = get_locator(body)
+        
+        except Exception:
+            continue 
+
+    if all_data:
+        return main_locator, all_data
+
+    return None, None
+
+
 def parse_anchor(row: WebElement):
     anchor_elements = []
     for field in ANCHOR_EL_ARR:
@@ -325,6 +457,47 @@ def parse_decor(row: WebElement):
         if not el.get_attribute("disabled"):
             return get_locator(el), el.get_attribute("value").strip()
     return None, ''
+
+
+def parse_bonus_section(row: WebElement):
+    try:
+        table_bodies = row.find_elements(By.CSS_SELECTOR, 'div.acf-field[data-key="field_64108fe3b696e"]')
+        all_data = []
+        table_locator = None
+
+        for table_body in table_bodies:
+            # Каждая строка в repeater-е
+            rows = table_body.find_elements(By.CSS_SELECTOR, 'table.acf-table tr.acf-row')
+
+            for r in rows:
+                # безопасные поиски, чтобы не падало
+                title_el = r.find_elements(By.CSS_SELECTOR, 'input[name*="[field_64108ff4b6970]"]')
+                text_el = r.find_elements(By.CSS_SELECTOR, 'input[name*="[field_64108ffab6971]"]')
+
+                max_len = max(len(title_el), len(text_el))
+                for i in range(max_len):
+                    title_input = title_el[i] if i < len(title_el) else None
+                    text_input = text_el[i] if i < len(text_el) else None
+
+                    title = title_input.get_attribute("value").strip() if title_input and not title_input.get_attribute("disabled") else ''
+                    text = text_input.get_attribute("value").strip() if text_input and not text_input.get_attribute("disabled") else ''
+
+                    # добавляем только непустые строки
+                    if title or text:
+                        all_data.append({
+                            "bonus_title": {"element": get_locator(title_input) if title_input else None, "text": title},
+                            "bonus_text": {"element": get_locator(text_input) if text_input else None, "text": text},
+                        })
+                        if not table_locator:
+                            table_locator = get_locator(table_body)
+
+        if all_data:
+            return table_locator, all_data
+
+    except Exception as e:
+        print("Ошибка в parse_bonus_section:", e)
+
+    return None, None
 
 
 def parse_icon_menu(row: WebElement):

@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import config
-from seleniumParser import StartSelenim, DriverShutdown, ParseData, StarTranslate
+from seleniumParser import StartSelenim, DriverShutdown, ParseData
 from translator import initTranslator
 
 class WorkerThread(QtCore.QThread):
@@ -200,7 +200,7 @@ class Ui_AutoTranslatorWnd(object):
             self.worker = WorkerThread(StartSelenim)
             self.worker.log.connect(self.add_log)
             self.worker.error.connect(self.add_log)
-            self.worker.finished.connect(lambda _: self.onTabsOpened("Все вкладки открыты ✅ Нажмите кнопку для старта перевода"))
+            self.worker.finished.connect(lambda _: self.onTabsOpened("Все вкладки открыты ✅"))
             self.worker.fallback_fn = self.onFallback
             self.worker.start()
     
@@ -213,7 +213,7 @@ class Ui_AutoTranslatorWnd(object):
         self.worker = WorkerThread(ParseData)
         self.worker.log.connect(self.add_log)
         self.worker.error.connect(self.add_log)
-        self.worker.finished.connect(lambda _: self.onTranslated("Данные считались ✅ Нажмите кнопку перевод, данные будут подставляться в поля"))
+        self.worker.finished.connect(lambda _: self.onTranslated("Данные считались ✅"))
         self.worker.fallback_fn = self.onFallback
         self.worker.start()
     

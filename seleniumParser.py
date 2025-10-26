@@ -115,6 +115,15 @@ def parse_in_current_tab(driver: webdriver.Chrome, emit_log=print):
         title_el, title_text = parserUtils.parse_title(row)
         block["title"] = {"element": title_el, "text": title_text}
 
+        block_el, block_text = parserUtils.parse_block(row)
+        block["block"] = {"element": block_el, "text": block_text}
+
+        block_advantages_el, block_advantages_text = parserUtils.parse_block_advantages(row)
+        block["block_advantages"] = {"element": block_advantages_el, "text": block_advantages_text}
+
+        block_promo_el, block_promo_text = parserUtils.parse_block_promo(row)
+        block["block_promo"] = {"element": block_promo_el, "text": block_promo_text}
+
         btnText_el, btnText_text = parserUtils.parse_icon_menu(row)
         block["icon_menu"] = {"element": btnText_el, "text": btnText_text}
 
@@ -135,6 +144,9 @@ def parse_in_current_tab(driver: webdriver.Chrome, emit_log=print):
 
         btnText_el, btnText_text = parserUtils.parse_bonus_block_text(row)
         block["bonus_block"] = {"element": btnText_el, "text": btnText_text}
+
+        btnText_el, btnText_text = parserUtils.parse_bonus_section(row)
+        block["bonus_section"] = {"element": btnText_el, "text": btnText_text}
 
         anchor_el, anchor_text = parserUtils.parse_decor(row)
         block["decor"] = {"element": anchor_el, "text": anchor_text}
@@ -201,6 +213,7 @@ def DriverShutdown(emit_log=print):
         time.sleep(25)
     DRIVER.quit();
 
+
 def TranslateBlock(emit_log=print):
     while True:
         try:
@@ -245,15 +258,15 @@ def StarTranslate(emit_log=print):
 
             emit_log(f'Заполняем страницу {filename}')
             for item in data:
-                for field_name in ["title", "icon_menu", "content", "collum", "collumImg", "collumGame", "button_text", "bonus_block", "decor", "anchor"]:
+                for field_name in ["title", "block", "block_advantages", "block_promo", "icon_menu", "content", "collum", "collumImg", "collumGame", "button_text", "bonus_block", "bonus_section", "decor", "anchor"]:
                     field = item.get(field_name)
                     if not field:
                         continue
                     process_text_field(DRIVER, field.get("element"), field.get("text"), emit_log)
-        
+    
+        emit_log("✅ Перевод завершен")
     except Exception as e:
         emit_log(f"Не удалось записать перевод для  {current_url}. Ошибка: {e}")
-
    
 
 def RemoveJsonFile():
@@ -408,6 +421,27 @@ def process_text_field(driver, element_info, text_data, emit_log=print):
                     if el:
                         smart_insert(driver, el, sub_text)
             for subfield in ["bonus_block_title", "bonus_block_size", "bonus_block_desc", "bonus_block_btn"]:
+                if subfield in subitem:
+                    sub_el_info = subitem[subfield].get("element")
+                    sub_text = subitem[subfield].get("text", "")
+                    el = smart_find_first_interactive(driver, sub_el_info, emit_log)
+                    if el:
+                        smart_insert(driver, el, sub_text)
+            for subfield in ["block_title", "block_text", "block_btn"]:
+                if subfield in subitem:
+                    sub_el_info = subitem[subfield].get("element")
+                    sub_text = subitem[subfield].get("text", "")
+                    el = smart_find_first_interactive(driver, sub_el_info, emit_log)
+                    if el:
+                        smart_insert(driver, el, sub_text)
+            for subfield in [ "title1", "title2", "title3", "block_btn"]:
+                if subfield in subitem:
+                    sub_el_info = subitem[subfield].get("element")
+                    sub_text = subitem[subfield].get("text", "")
+                    el = smart_find_first_interactive(driver, sub_el_info, emit_log)
+                    if el:
+                        smart_insert(driver, el, sub_text)
+            for subfield in [ "bonus_title", "bonus_text"]:
                 if subfield in subitem:
                     sub_el_info = subitem[subfield].get("element")
                     sub_text = subitem[subfield].get("text", "")
